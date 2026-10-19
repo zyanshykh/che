@@ -1,0 +1,6 @@
+{
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.js": { "includeFiles": "{data,public}/**" }
+  }
+}

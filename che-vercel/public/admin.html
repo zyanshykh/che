@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin | Che Story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap nav">
+  <a class="brand" href="/"><span>★</span> <b>CHE</b> Admin</a>
+  <div class="row">
+    <a class="btn ghost sm" href="/" target="_blank">View site</a>
+    <button class="btn ghost sm hidden" id="logoutBtn">Logout</button>
+  </div>
+</div></header>
+
+<div class="admin">
+
+  <!-- LOGIN -->
+  <div class="panel" id="loginBox" style="max-width:420px;margin:60px auto">
+    <h2>Admin login</h2>
+    <label for="pw">Password</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <div style="margin-top:16px"><button class="btn" id="loginBtn">Login</button></div>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" class="hidden">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">Posts</h2>
+        <button class="btn sm" id="newBtn">+ New post</button>
+      </div>
+      <div id="list" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel hidden" id="editor">
+      <h2 id="editorTitle">New post</h2>
+
+      <div class="tabs" id="tabs">
+        <button data-l="en" class="on">English</button>
+        <button data-l="ur">اردو</button>
+        <button data-l="rur">Roman Urdu</button>
+      </div>
+      <div id="panes"></div>
+
+      <label for="slug">URL slug (optional, English letters)</label>
+      <input type="text" id="slug" placeholder="che-guevara-in-bolivia">
+
+      <label>Cover image (optional)</label>
+      <input type="file" id="file" accept="image/jpeg,image/png,image/webp,image/gif">
+      <div class="hint">JPG, PNG, WEBP or GIF, max 3MB. Use your own images or copyright-free ones.</div>
+      <img id="imgPrev" class="preview-img hidden" alt="">
+      <button class="btn ghost sm hidden" id="rmImg" style="margin-top:8px">Remove image</button>
+
+      <label style="display:flex;gap:8px;align-items:center;margin-top:18px">
+        <input type="checkbox" id="published" checked> Published (visible to everyone)
+      </label>
+
+      <div class="row" style="margin-top:20px">
+        <button class="btn" id="saveBtn">Save post</button>
+        <button class="btn ghost" id="cancelBtn">Cancel</button>
+      </div>
+      <div class="hint">Formatting: start a line with <b>##</b> for a heading. Leave a blank line between paragraphs.</div>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story | Che Story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header"></div>
+<main class="article" id="article"><p class="empty" data-i18n="loading"></p></main>
+<div id="footer"></div>
+<script src="/js/app.js"></script>
+<script>
+let POST = null, FAILED = false;
+const slug = new URLSearchParams(location.search).get('slug');
+
+function renderPost() {
+  const el = document.getElementById('article');
+  if (FAILED || !POST) { el.innerHTML = `<a class="back" href="/blog.html">← ${esc(t('back'))}</a><p class="empty">${esc(t('notfound'))}</p>`; return; }
+  const p = POST;
+  const title = pick(p.title);
+  document.title = title + ' | Che Story';
+  const missing = !hasLang(p.content);
+  el.innerHTML = `
+    <a class="back" href="/blog.html">${LANG === 'ur' ? '→' : '←'} ${esc(t('back'))}</a>
+    <h1>${esc(title)}</h1>
+    <div class="meta">${esc(fmtDate(p.createdAt))} · ${readMinutes(pick(p.content))} ${esc(t('min'))}</div>
+    ${p.image ? `<img class="cover" src="${esc(p.image)}" alt="${esc(title)}">` : ''}
+    ${missing ? `<div class="note">${esc(t('not_available'))}</div>` : ''}
+    ${renderContent(pick(p.content))}`;
+}
+function onLangChange() { renderPost(); }
+initPage('blog');
+if (!slug) { FAILED = true; renderPost(); }
+else api('/api/posts/' + encodeURIComponent(slug)).then((p) => { POST = p; renderPost(); }).catch(() => { FAILED = true; renderPost(); });
+</script>
+</body>
+</html>

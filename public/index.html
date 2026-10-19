@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Che Guevara: The Real Story</title>
+<meta name="description" content="The real story of Che Guevara in English, Urdu and Roman Urdu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header"></div>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="badge" data-i18n="badge"></span>
+    <h1 data-i18n-html="hero_title"></h1>
+    <p data-i18n="hero_sub"></p>
+    <a class="btn" href="/blog.html" data-i18n="cta"></a>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="features">
+      <div class="feature"><div class="ic">📖</div><h3 data-i18n="f1t"></h3><p data-i18n="f1d"></p></div>
+      <div class="feature"><div class="ic">🌐</div><h3 data-i18n="f2t"></h3><p data-i18n="f2d"></p></div>
+      <div class="feature"><div class="ic">🔥</div><h3 data-i18n="f3t"></h3><p data-i18n="f3d"></p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><h2 data-i18n="latest"></h2><a href="/blog.html" data-i18n="all"></a></div>
+    <div class="grid" id="posts"></div>
+  </div>
+</section>
+
+<div id="footer"></div>
+<script src="/js/app.js"></script>
+<script>
+let POSTS = [];
+function renderPosts() {
+  const box = document.getElementById('posts');
+  box.innerHTML = POSTS.length ? POSTS.slice(0, 3).map(postCard).join('') : `<p class="empty">${esc(t('no_posts'))}</p>`;
+}
+function onLangChange() { renderPosts(); }
+initPage('home');
+api('/api/posts').then((p) => { POSTS = p; renderPosts(); }).catch(() => { renderPosts(); });
+</script>
+</body>
+</html>

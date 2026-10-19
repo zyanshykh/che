@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog | Che Story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header"></div>
+<section>
+  <div class="wrap">
+    <div class="sec-head"><div><h2 data-i18n="blog_title"></h2><p class="meta" data-i18n="blog_sub"></p></div></div>
+    <div class="grid" id="posts"></div>
+  </div>
+</section>
+<div id="footer"></div>
+<script src="/js/app.js"></script>
+<script>
+let POSTS = [];
+function renderPosts() {
+  document.getElementById('posts').innerHTML = POSTS.length ? POSTS.map(postCard).join('') : `<p class="empty">${esc(t('no_posts'))}</p>`;
+}
+function onLangChange() { renderPosts(); }
+initPage('blog');
+api('/api/posts').then((p) => { POSTS = p; renderPosts(); }).catch(renderPosts);
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "che-blog",
+  "version": "1.0.0",
+  "description": "Che Guevara real story blog - English, Urdu, Roman Urdu",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

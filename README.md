@@ -102,3 +102,28 @@ Open `public/js/timeline-data.js`. Each event has a date label (`y`), a title (`
 - **View counts** count one view per visitor per 30 minutes. Search engine bots can add a few.
 - **Admin login** lasts 8 hours. Changing `ADMIN_PASSWORD` or `SESSION_SECRET` logs everyone out.
 - **Free database plans have limits.** For a growing blog, check the provider's limits.
+
+## Live site
+
+- Site: https://cheblog-rho.vercel.app
+- Admin panel: https://cheblog-rho.vercel.app/admin (password only, never share it)
+
+## Updating the code later (from a phone with Termux, or a laptop)
+
+Every `git push` to `main` makes Vercel deploy the new version by itself.
+
+    cd ~/che
+    git pull
+    git add -A
+    git commit -m "Describe your change"
+    git push
+
+Posts you write in the admin panel are stored in the database, not in the code, so pushing new code never deletes them.
+
+## If something breaks
+
+- **Deploy has a red cross on GitHub:** open the project on vercel.com, Deployments, click the failed one, read Build Logs.
+- **/admin says saving is not set up:** the Upstash Redis store is not connected yet (Storage tab, then Redeploy).
+- **Image upload fails online:** the Blob store is not connected yet (Storage tab, then Redeploy).
+- **Old story still shows:** log in to /admin and press "Update starter story".
+- **Environment variables changed but nothing happened:** Redeploy, they only apply to new deployments.

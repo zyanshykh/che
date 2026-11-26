@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story | Che Story</title>
+<!--SEO-->
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="progress" aria-hidden="true"></div>
+<div id="header"></div>
+<main id="main">
+  <article class="article" id="article"><p class="empty" data-i18n="loading"></p></article>
+  <div id="extras"></div>
+</main>
+<div id="footer"></div>
+<script src="/js/app.js"></script>
+<script>
+let POST = null, FAILED = false;
+
+// slug from /post/the-slug (also works with the old /post.html?slug=the-slug)
+const slug = (() => {
+  const m = /^\/post\/([a-z0-9-]+)\/?$/.exec(location.pathname);
+  return m ? m[1] : new URLSearchParams(location.search).get('slug');
+})();
+
+function parseQuotes(text) {
+  return String(text || '').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.lastIndexOf(' | ');
+    return i > 0 ? { q: l.slice(0, i), by: l.slice(i + 3) } : { q: l, by: '' };
+  });
+}
+
+function shareBar(p, title) {
+  const url = location.origin + '/post/' + p.slug;
+  const u = encodeURIComponent(url), tt = encodeURIComponent(title);
+  return `<div class="sharebar"><span class="lbl">${esc(t('share'))}:</span>
+    <a href="https://wa.me/?text=${tt}%20${u}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener noreferrer">Facebook</a>
+    <a href="https://twitter.com/intent/tweet?text=${tt}&url=${u}" target="_blank" rel="noopener noreferrer">X</a>
+    <button type="button" id="copyBtn" data-url="${esc(url)}">${esc(t('copy_link'))}</button></div>`;
+}
+
+function renderPost() {
+  const el = document.getElementById('article');
+  const ex = document.getElementById('extras');
+  if (FAILED || !POST) {
+    el.innerHTML = `<a class="back" href="/blog">← ${esc(t('back'))}</a><p class="empty">${esc(t('notfound'))}</p>`;
+    ex.innerHTML = ''; return;
+  }
+  const p = POST;
+  const title = pick(p.title);
+  document.title = title + ' | Che Story';
+  const missing = !hasLang(p.content);
+  el.innerHTML = `
+    <a class="back" href="/blog">${LANG === 'ur' ? '→' : '←'} ${esc(t('back'))}</a>
+    <h1>${esc(title)}</h1>
+    <div class="meta">${esc(fmtDate(p.createdAt))} · ${readMin({ content: p.content, readMin: null })} ${esc(t('min'))}</div>
+    ${tagChips(p.tags)}
+    ${shareBar(p, title)}
+    ${p.image ? `<img class="cover" src="${esc(p.image)}" alt="${esc(title)}">` : ''}
+    ${missing ? `<div class="note">${esc(t('not_available'))}</div>` : ''}
+    ${renderContent(pick(p.content))}`;
+
+  let html = '';
+  const quotes = parseQuotes(pick(p.quotes));
+  if (quotes.length) {
+    html += `<div class="box quotes"><h3>${esc(t('quotes_title'))}</h3>` + quotes.map((x) =>
+      `<div class="q"><blockquote>“${esc(x.q)}”</blockquote>${x.by ? `<cite>${esc(x.by)}</cite>` : ''}</div>`).join('') + '</div>';
+  }
+  const src = (p.sources || []).filter((s) => /^https:\/\//.test(s.url));
+  if (src.length) {
+    html += `<div class="box"><h3>${esc(t('sources_title'))}</h3><ol>` + src.map((s) =>
+      `<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer nofollow">${esc(s.title)}</a></li>`).join('') + '</ol></div>';
+  }
+  if (p.newer || p.older) {
+    const nav = (x, key, cls) => x ? `<a class="${cls}" href="/post/${encodeURIComponent(x.slug)}"><small>${esc(t(key))}</small>${esc(pick(x.title))}</a>` : '<span></span>';
+    html += `<nav class="pn">${nav(p.older, 'older', 'pv')}${nav(p.newer, 'newer', 'nx')}</nav>`;
+  }
+  if (p.related && p.related.length) {
+    html += `<section><div class="wrap"><div class="sec-head"><h2>${esc(t('related'))}</h2></div><div class="grid">${p.related.map(postCard).join('')}</div></div></section>`;
+  }
+  ex.innerHTML = html;
+
+  const cb = document.getElementById('copyBtn');
+  if (cb) cb.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(cb.dataset.url); } catch (e) {
+      const ta = document.createElement('textarea'); ta.value = cb.dataset.url; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e2) {} ta.remove();
+    }
+    cb.textContent = t('copied'); setTimeout(() => { cb.textContent = t('copy_link'); }, 1800);
+  });
+}
+
+// reading progress bar
+const bar = document.getElementById('progress');
+function updateProgress() {
+  const a = document.getElementById('article');
+  const top = a.offsetTop, h = a.offsetHeight - window.innerHeight * 0.4;
+  const pct = h > 0 ? Math.min(100, Math.max(0, ((window.scrollY - top) / h) * 100)) : 0;
+  bar.style.width = pct + '%';
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+window.addEventListener('resize', updateProgress);
+
+function onLangChange() { renderPost(); updateProgress(); }
+initPage('blog');
+
+if (!slug) { FAILED = true; renderPost(); }
+else {
+  api('/api/posts/' + encodeURIComponent(slug)).then((p) => {
+    POST = p; renderPost(); updateProgress();
+    // count one view per browser tab session
+    let seen = false;
+    try { seen = sessionStorage.getItem('v:' + p.id) === '1'; } catch (e) {}
+    if (!seen) {
+      try { sessionStorage.setItem('v:' + p.id, '1'); } catch (e) {}
+      fetch('/api/posts/' + encodeURIComponent(p.slug) + '/view', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+    }
+  }).catch(() => { FAILED = true; renderPost(); });
+}
+</script>
+</body>
+</html>

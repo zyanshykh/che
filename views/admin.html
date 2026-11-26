@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Admin | Che Story</title>
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<script src="/js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
@@ -19,7 +21,7 @@
   </div>
 </div></header>
 
-<div class="admin">
+<main class="admin">
 
   <!-- LOGIN -->
   <div class="panel" id="loginBox" style="max-width:420px;margin:60px auto">
@@ -35,8 +37,12 @@
     <div class="panel">
       <div class="row" style="justify-content:space-between">
         <h2 style="margin:0">Posts</h2>
-        <button class="btn sm" id="newBtn">+ New post</button>
+        <div class="row">
+          <button class="btn ghost sm" id="syncBtn" title="Copies the starter story from the code into the database">Update starter story</button>
+          <button class="btn sm" id="newBtn">+ New post</button>
+        </div>
       </div>
+      <div class="msg" id="listMsg"></div>
       <div id="list" style="margin-top:10px"></div>
     </div>
 
@@ -50,12 +56,19 @@
       </div>
       <div id="panes"></div>
 
+      <label>Topics (tags)</label>
+      <div class="checks" id="tagChecks"></div>
+
       <label for="slug">URL slug (optional, English letters)</label>
       <input type="text" id="slug" placeholder="che-guevara-in-bolivia">
 
+      <label for="sources">Sources (one per line: Title | https://link)</label>
+      <textarea class="mid" id="sources" placeholder="Britannica: Che Guevara | https://www.britannica.com/biography/Che-Guevara"></textarea>
+      <div class="hint">Only https links. They appear at the bottom of the story.</div>
+
       <label>Cover image (optional)</label>
       <input type="file" id="file" accept="image/jpeg,image/png,image/webp,image/gif">
-      <div class="hint">JPG, PNG, WEBP or GIF, max 4MB. Use your own images or copyright-free ones.</div>
+      <div class="hint">JPG, PNG, WEBP or GIF, max 3MB. Use your own images or copyright-free ones.</div>
       <img id="imgPrev" class="preview-img hidden" alt="">
       <button class="btn ghost sm hidden" id="rmImg" style="margin-top:8px">Remove image</button>
 
@@ -67,11 +80,24 @@
         <button class="btn" id="saveBtn">Save post</button>
         <button class="btn ghost" id="cancelBtn">Cancel</button>
       </div>
-      <div class="hint">Formatting: start a line with <b>##</b> for a heading. Leave a blank line between paragraphs.</div>
+      <div class="hint">
+        Formatting in the article box: <b>##</b> heading, <b>&gt;</b> quote, <b>-</b> bullet point, <b>**bold**</b>, <b>*italic*</b>. Leave a blank line between paragraphs.
+        Quotes box: one quote per line as <b>Quote text | Who said it</b>.
+      </div>
       <div class="msg" id="saveMsg"></div>
     </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">Newsletter subscribers <span class="tag" id="subCount">0</span></h2>
+        <a class="btn ghost sm" href="/api/subscribers.csv">Download CSV</a>
+      </div>
+      <div class="hint">This site only collects emails. To send a newsletter, export the CSV and use an email service. Keep the list private.</div>
+      <div class="msg" id="subMsg"></div>
+      <div id="subs" style="margin-top:10px"></div>
+    </div>
   </div>
-</div>
+</main>
 
 <script src="/js/admin.js"></script>
 </body>

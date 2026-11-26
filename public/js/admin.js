@@ -1,6 +1,7 @@
-// Admin panel logic. Server checks the admin cookie on every write.
+// Admin panel logic. The server checks the admin cookie on every write.
 const $ = (id) => document.getElementById(id);
 const LANGS = [['en', 'English', 'ltr'], ['ur', 'اردو', 'rtl'], ['rur', 'Roman Urdu', 'ltr']];
+const TAGS = [['biography', 'Life story'], ['cuba', 'Cuba'], ['africa', 'Africa'], ['bolivia', 'Bolivia'], ['legacy', 'Legacy'], ['analysis', 'Analysis']];
 let editingId = null;
 let imageUrl = '';
 let posts = [];
@@ -20,7 +21,7 @@ async function api(url, opts) {
 function flash(el, text, ok) {
   el.className = 'msg ' + (ok ? 'ok' : 'err');
   el.textContent = text;
-  if (ok) setTimeout(() => { el.className = 'msg'; }, 3000);
+  if (ok) setTimeout(() => { el.className = 'msg'; }, 4000);
 }
 
 // build the 3 language panes once
@@ -32,7 +33,12 @@ $('panes').innerHTML = LANGS.map(([l, name, dir], i) => `
     <textarea id="excerpt_${l}"></textarea>
     <label>Article (${name})</label>
     <textarea class="big" id="content_${l}"></textarea>
+    <label>Quotes box (${name}), one per line: Quote | Who said it</label>
+    <textarea class="mid" id="quotes_${l}"></textarea>
   </div>`).join('');
+
+$('tagChecks').innerHTML = TAGS.map(([k, name]) =>
+  `<label><input type="checkbox" class="tagbox" value="${k}"> ${name}</label>`).join('');
 
 $('tabs').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -50,6 +56,7 @@ function showDash() {
   $('dash').classList.remove('hidden');
   $('logoutBtn').classList.remove('hidden');
   loadPosts();
+  loadSubs();
 }
 
 async function loadPosts() {
@@ -59,10 +66,11 @@ async function loadPosts() {
       <div>
         <b>${esc(p.title.en || p.title.rur || p.title.ur || '(no title)')}</b>
         <span class="tag ${p.published ? 'live' : ''}">${p.published ? 'Published' : 'Draft'}</span>
-        <div class="meta">${esc(new Date(p.createdAt).toLocaleDateString())} · /${esc(p.slug)}</div>
+        <span class="tag">${Number(p.views) || 0} views</span>
+        <div class="meta">${esc(new Date(p.createdAt).toLocaleDateString())} · /post/${esc(p.slug)}</div>
       </div>
       <div class="row">
-        <a class="btn ghost sm" href="/post.html?slug=${encodeURIComponent(p.slug)}" target="_blank">View</a>
+        <a class="btn ghost sm" href="/post/${encodeURIComponent(p.slug)}" target="_blank">View</a>
         <button class="btn ghost sm" data-edit="${esc(p.id)}">Edit</button>
         <button class="btn danger sm" data-del="${esc(p.id)}">Delete</button>
       </div>
@@ -79,11 +87,49 @@ $('list').addEventListener('click', async (e) => {
   }
 });
 
+$('syncBtn').onclick = async () => {
+  if (!confirm('This copies the starter story from the code into the database. If you edited that story here, your edits to it will be replaced. Continue?')) return;
+  try {
+    const r = await api('/api/admin/sync-seed', { method: 'POST' });
+    flash($('listMsg'), r.note || `Done. Updated ${r.updated}, added ${r.added}.`, true);
+    loadPosts();
+  } catch (err) { flash($('listMsg'), err.message, false); }
+};
+
+// ---------- subscribers ----------
+async function loadSubs() {
+  try {
+    const rows = await api('/api/subscribers');
+    $('subCount').textContent = rows.length;
+    $('subs').innerHTML = rows.length ? rows.map((r) => `
+      <div class="sub-row">
+        <span>${esc(r.email)} <span class="tag">${esc(r.lang || '')}</span></span>
+        <span class="row"><span class="meta">${esc(r.at ? new Date(r.at).toLocaleDateString() : '')}</span>
+        <button class="btn ghost sm" data-rm="${esc(r.email)}">Remove</button></span>
+      </div>`).join('') : '<p class="hint">No subscribers yet.</p>';
+  } catch (err) { flash($('subMsg'), err.message, false); }
+}
+$('subs').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-rm]'); if (!b) return;
+  if (!confirm('Remove ' + b.dataset.rm + ' from the list?')) return;
+  try { await api('/api/subscribers', { method: 'DELETE', body: JSON.stringify({ email: b.dataset.rm }) }); loadSubs(); }
+  catch (err) { flash($('subMsg'), err.message, false); }
+});
+
+// ---------- editor ----------
 function setImage(url) {
   imageUrl = url || '';
   $('imgPrev').classList.toggle('hidden', !imageUrl);
   $('rmImg').classList.toggle('hidden', !imageUrl);
   if (imageUrl) $('imgPrev').src = imageUrl;
+}
+
+const sourcesToText = (list) => (list || []).map((s) => s.title + ' | ' + s.url).join('\n');
+function textToSources(text) {
+  return String(text || '').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.lastIndexOf(' | ');
+    return i > 0 ? { title: l.slice(0, i).trim(), url: l.slice(i + 3).trim() } : null;
+  }).filter(Boolean);
 }
 
 function openEditor(p) {
@@ -93,7 +139,10 @@ function openEditor(p) {
     $('title_' + l).value = p ? p.title[l] : '';
     $('excerpt_' + l).value = p ? p.excerpt[l] : '';
     $('content_' + l).value = p ? p.content[l] : '';
+    $('quotes_' + l).value = p && p.quotes ? p.quotes[l] || '' : '';
   });
+  document.querySelectorAll('.tagbox').forEach((c) => { c.checked = !!(p && (p.tags || []).includes(c.value)); });
+  $('sources').value = p ? sourcesToText(p.sources) : '';
   $('slug').value = p ? p.slug : '';
   $('published').checked = p ? p.published : true;
   $('file').value = '';
@@ -111,7 +160,7 @@ $('rmImg').onclick = () => setImage('');
 $('file').addEventListener('change', () => {
   const f = $('file').files[0];
   if (!f) return;
-  if (f.size > 4 * 1024 * 1024) { flash($('saveMsg'), 'Image is bigger than 4MB', false); $('file').value = ''; return; }
+  if (f.size > 3 * 1024 * 1024) { flash($('saveMsg'), 'Image is bigger than 3MB', false); $('file').value = ''; return; }
   const reader = new FileReader();
   reader.onload = async () => {
     try {
@@ -124,19 +173,29 @@ $('file').addEventListener('change', () => {
 });
 
 $('saveBtn').onclick = async () => {
-  const body = { title: {}, excerpt: {}, content: {}, slug: $('slug').value, image: imageUrl, published: $('published').checked };
+  const body = {
+    title: {}, excerpt: {}, content: {}, quotes: {},
+    slug: $('slug').value, image: imageUrl, published: $('published').checked,
+    tags: Array.from(document.querySelectorAll('.tagbox:checked')).map((c) => c.value),
+    sources: textToSources($('sources').value),
+  };
   LANGS.forEach(([l]) => {
     body.title[l] = $('title_' + l).value.trim();
     body.excerpt[l] = $('excerpt_' + l).value.trim();
     body.content[l] = $('content_' + l).value.trim();
+    body.quotes[l] = $('quotes_' + l).value.trim();
   });
   if (!body.title.en && !body.title.ur && !body.title.rur) { flash($('saveMsg'), 'Write a title in at least one language', false); return; }
   if (!body.content.en && !body.content.ur && !body.content.rur) { flash($('saveMsg'), 'Write the article in at least one language', false); return; }
+  const lines = $('sources').value.split('\n').filter((l) => l.trim()).length;
+  const skipped = lines - body.sources.length;
   try {
     const p = await api(editingId ? '/api/posts/' + editingId : '/api/posts', { method: editingId ? 'PUT' : 'POST', body: JSON.stringify(body) });
     editingId = p.id;
     $('slug').value = p.slug;
-    flash($('saveMsg'), 'Saved. ' + (p.published ? 'It is live.' : 'Saved as draft.'), true);
+    $('sources').value = sourcesToText(p.sources);
+    flash($('saveMsg'), 'Saved. ' + (p.published ? 'It is live.' : 'Saved as draft.') +
+      (skipped > 0 ? ` (${skipped} source line(s) skipped: use "Title | https://link".)` : ''), true);
     loadPosts();
   } catch (err) { flash($('saveMsg'), err.message, false); }
 };

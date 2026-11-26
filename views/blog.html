@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog | Che Story</title>
+<meta name="description" content="All stories about Che Guevara in English, Urdu and Roman Urdu. Search by word or browse by topic.">
+<link rel="canonical" href="{{SITE}}/blog">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Che Story">
+<meta property="og:title" content="Blog | Che Story">
+<meta property="og:description" content="All stories about Che Guevara in English, Urdu and Roman Urdu.">
+<meta property="og:url" content="{{SITE}}/blog">
+<meta property="og:image" content="{{SITE}}/img/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header"></div>
+<main id="main">
+<section>
+  <div class="wrap">
+    <div class="sec-head"><div><h1 style="font-size:1.9rem" data-i18n="blog_title"></h1><p class="meta" data-i18n="blog_sub"></p></div></div>
+    <div class="searchbar">
+      <input class="search" type="search" id="q" autocomplete="off" data-i18n-ph="search_ph" data-i18n-label="search_ph">
+      <div class="tags" id="tagbar"></div>
+    </div>
+    <div class="grid" id="posts"></div>
+  </div>
+</section>
+</main>
+<div id="footer"></div>
+<script src="/js/app.js"></script>
+<script>
+let POSTS = [], busy = 0;
+const state = { q: '', tag: '' };
+const params = new URLSearchParams(location.search);
+if (TAGS.includes(params.get('tag'))) state.tag = params.get('tag');
+state.q = (params.get('q') || '').slice(0, 80);
+
+function renderTags() {
+  const all = [''].concat(TAGS);
+  document.getElementById('tagbar').innerHTML = all.map((x) =>
+    `<button type="button" class="chip ${state.tag === x ? 'on' : ''}" data-tag="${x}">${esc(x ? tagLabel(x) : t('all_tags'))}</button>`).join('');
+}
+function renderPosts() {
+  document.getElementById('posts').innerHTML = POSTS.length
+    ? POSTS.map(postCard).join('')
+    : `<p class="empty">${esc((state.q || state.tag) ? t('no_results') : t('no_posts'))}</p>`;
+}
+function load() {
+  const my = ++busy;
+  const qs = new URLSearchParams();
+  if (state.q) qs.set('q', state.q);
+  if (state.tag) qs.set('tag', state.tag);
+  history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : ''));
+  api('/api/posts?' + qs).then((p) => { if (my === busy) { POSTS = p; renderPosts(); } })
+    .catch(() => { if (my === busy) { POSTS = []; renderPosts(); } });
+}
+function onLangChange() { renderTags(); renderPosts(); }
+
+initPage('blog');
+const box = document.getElementById('q');
+box.value = state.q;
+let timer;
+box.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { state.q = box.value.trim().slice(0, 80); load(); }, 250); });
+document.getElementById('tagbar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tag]'); if (!b) return;
+  state.tag = b.dataset.tag; renderTags(); load();
+});
+renderTags();
+load();
+</script>
+</body>
+</html>

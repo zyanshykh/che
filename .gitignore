@@ -1,4 +1,10 @@
 node_modules/
 .env
+.env.local
+.vercel/
+# private data created while running on your own computer (never publish these)
+data/views.json
+data/subscribers.json
+# images uploaded from the admin panel on your own computer
 public/uploads/*
 !public/uploads/.gitkeep
